@@ -25,4 +25,10 @@ Route::get('/home', function () {
 	return view('home.index');
 });
 
-Route::resource('person', 'UserController');
+Route::post('/person/people', 'PersonController@getPeople');
+
+Route::get('/person/suggests', 'PersonController@suggestion');
+
+Route::resource('person', 'PersonController');
+
+

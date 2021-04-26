@@ -67,17 +67,16 @@
     </head>
     <body>
         <div id="app">
+
+          <v-app>
+            <left-sidebar></left-sidebar>
+            <header-bar-nav></header-bar-nav>
             
-            <!-- <register-form></register-form> -->
+            @yield('content')
             
-            <template>
-            <v-app>
-              @yield('header')
-              @yield('content')
-            </v-app>
-</template>
+          </v-app>
         </div>
     </body>
-
     <script  src="{{ mix('js/app.js') }}"></script>
+    
 </html>

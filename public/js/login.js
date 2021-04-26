@@ -84,29 +84,17 @@
 /******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ "./resources/js/login.js":
-/*!*******************************!*\
-  !*** ./resources/js/login.js ***!
-  \*******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-
-
-/***/ }),
-
-/***/ 1:
+/******/ ([
+/* 0 */,
+/* 1 */
 /*!*************************************!*\
   !*** multi ./resources/js/login.js ***!
   \*************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! C:\laragon\www\Vuetify\resources\js\login.js */"./resources/js/login.js");
+!(function webpackMissingModule() { var e = new Error("Cannot find module 'C:\\laragon\\www\\jvwhm-pms\\resources\\js\\login.js'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 
 
 /***/ })
-
-/******/ });
+/******/ ]);

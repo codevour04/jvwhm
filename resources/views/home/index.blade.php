@@ -3,6 +3,8 @@
 @section('title', 'Home')
 
 @section('content')
-  <wireframe></wireframe>
-  {{-- <card title="hey"></card> --}}
+ 	
+    <list-of-people></list-of-people>
+    <register-form></register-form>
+  
 @endsection

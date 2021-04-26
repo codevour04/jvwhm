@@ -24,7 +24,6 @@ class AddNewPersonRequest extends FormRequest
     public function rules()
     {
         return [
-            'leader' => 'bail|required',
             'firstname' => 'required',
             'lastname' => 'required'
         ];
@@ -33,7 +32,6 @@ class AddNewPersonRequest extends FormRequest
     public function messages()
     {
         return [
-            'leader.required' => 'Leader name is required',
             'firstname.required' => 'Firstname is required',
             'lastname.required' => 'Surname is required' 
         ];

@@ -29,7 +29,7 @@
             @yield('content')
         </div>
     </body>
-    {{-- <script type="text/javascript" src="{{ asset('/js/login.js') }}"></script> --}}
+    <script type="text/javascript" src="{{ asset('/js/login.js') }}"></script>
 
     @yield('scripts')
 </html>
