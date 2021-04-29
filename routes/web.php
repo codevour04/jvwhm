@@ -25,9 +25,7 @@ Route::get('/home', function () {
 	return view('home.index');
 });
 
-Route::post('/person/people', 'PersonController@getPeople');
-
-Route::get('/person/suggests', 'PersonController@suggestion');
+Route::post('/people/search', 'PersonController@search');
 
 Route::resource('person', 'PersonController');
 

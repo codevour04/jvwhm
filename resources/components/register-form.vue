@@ -1,6 +1,5 @@
-<template>
-  <v-main v-if="isFormOpen">
-    <snack-bar v-bind:message="alertMessage"></snack-bar>
+  <template>
+  <v-main>
     <v-container fluid>
       <v-row
         align="center"
@@ -15,90 +14,87 @@
           >
           <v-card class="elevation-12">
             <v-card-text>
-              <v-form
-              ref="form"
-              lazy-validation
-              >
-                <v-combobox
-                v-model="newPerson.leader"
-                :items="people"
-                item-text="fullname"
-                label="Leader"
-                placeholder="John Doe">
-                </v-combobox>
+              <v-form ref="form" lazy-validation>
+                <div class="d-flex justify-center align-end pt-4">
+                  <v-avatar size="100">
+                    <img alt="user" :src="url">
+                  </v-avatar>
+                  <div>
+                    <v-file-input v-model="image" @change="changeAvatar" :rules="uploadRules"
+                    type="file"
+                    accept="image/.jpg, image/.jpeg, image/.png"
+                    prepend-icon="mdi-camera" hide-input>
+                    </v-file-input>
+                  </div>
+                </div>
+                <leader-dropdown></leader-dropdown>
                 <v-text-field
-                v-model="newPerson.firstname"
+                v-model="person.firstname"
+                :rules="firstnameRules"
                 label="First name"
                 required
-                :rules="firstnameRules"
                 placeholder="Mark"
                 ></v-text-field>
                 <v-text-field
-                v-model="newPerson.lastname"
+                v-model="person.lastname"
+                :rules="lastnameRules"
                 label="Last name"
                 required
-                :rules="lastnameRules"
                 placeholder="Doe"
                 ></v-text-field>
                 <v-text-field
-                v-model="newPerson.middlename"
+                v-model="person.middlename"
                 label="Middle name"
                 placeholder="Smith"
                 ></v-text-field>
-                <v-menu
-                ref="menu"
-                v-model="menu"
-                :close-on-content-click="false"
-                transition="scale-transition"
-                offset-y
-                min-width="auto"
-                >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-text-field
-                    v-model="newPerson.birthdate"
-                    label="Birthday date"
-                    readonly
-                    v-bind="attrs"
-                    v-on="on"
-                    ></v-text-field>
-                  </template>
-                  <v-row justify="center">
-                    <v-date-picker dense
-                    ref="picker"
-                    v-model="newPerson.birthdate"
-                    placeholder="December 25, 1995"
-                    :max="new Date().toISOString().substr(0, 10)"
-                    min="1950-01-01"
-                    @change="save"
-                    ></v-date-picker>
-                  </v-row>
-                </v-menu>
                 <v-text-field
-                v-model="newPerson.address"
+                v-model="person.address"
                 label="Address"
                 placeholder="M.H. del Pilar st. Brgy. Masigla, Bright Subdivision"
                 ></v-text-field>
-                <v-autocomplete
-                v-model="newPerson.city"
-                :items="cities"
-                label="City"
-                placeholder="Quezon city"
-                ></v-autocomplete>
-                <v-text-field
-                v-model="newPerson.contact_number"
-                label="Contact number"
-                placeholder="09456644920"
-                ></v-text-field>
-                <v-btn
-                :loading="isLoading"
-                :disabled="isLoading"
-                color="success"
-                class="mr-4"
-                @click="validate">{{ buttonLabel }}</v-btn>
-                <v-btn @click="closeForm"
-                color="error"
-                class="mr-4">Cancel</v-btn>
-              </v-form>
+                <list-of-city></list-of-city>
+                <template>
+                    <v-menu
+                      ref="menu"
+                      v-model="menu"
+                      :close-on-content-click="false"
+                      transition="scale-transition"
+                      offset-y
+                      min-width="auto"
+                    >
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field
+                          v-model="person.birthdate"
+                          label="Birthday date"
+                          readonly
+                          v-bind="attrs"
+                          v-on="on"
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker
+                        ref="picker"
+                        v-model="person.birthdate"
+                        :max="new Date().toISOString().substr(0, 10)"
+                        min="1950-01-01"
+                        @change="save"
+                      ></v-date-picker>
+                    </v-menu>
+                  </template>
+                  <v-text-field
+                  v-model="person.contact_number"
+                  label="Contact number"
+                  placeholder="09456644920"
+                  ></v-text-field>
+                  <v-btn
+                  :loading="isLoading"
+                  :disabled="isLoading"
+                  color="success"
+                  class="mr-4" @click="validate">Submit</v-btn>
+                  <v-btn @click="closeForm"
+                  :disabled="isLoading"
+                  color="error"
+                  class="mr-4">Cancel</v-btn>
+              </v-form> 
             </v-card-text>
           </v-card>
         </v-col>
@@ -115,15 +111,18 @@ export default {
   data: () => ({
     isFormOpen: false,
     people: [],
-    newPerson: new Person(),
+    person: new Person(),
     menu: false,
+    date: null,
     cities: [],
     isLoading: false,
-    leaderRules: [v => !!v || 'Leader name is required'],
     firstnameRules: [v => !!v || 'Firstname is required'],
     lastnameRules: [v => !!v || 'Surname is required'],
     alertMessage: 'Add successfull',
-    buttonLabel: 'ADD'
+    leader: null,
+    image: null,
+    url: "/images/profile-card/default.jpg",
+    uploadRules: [v => !v || v.size < 2000000 || 'Avatar size should be less than 2 MB!'],
   }),
   watch: {
     menu (val) {
@@ -131,73 +130,83 @@ export default {
     }
   },
   created () {
-    this.fetchPeople()
     this.cities = Philippines.city_mun.map(city => city.name)
-    this.$root.$on('openForm', (data) => {
-      this.isFormOpen = !this.isFormOpen
-      this.buttonLabel = data.button
-      this.newPerson = data.person
+    this.$root.$on('leader-dropdown', (data) => {
+        this.leader = data
     })
-    this.$root.$on('loadPeople', (people) => {
-      this.people = people
+    this.$root.$on('select-city', (data) => {
+        this.person.city = data
+    })
+    this.$root.$on('change-avatar', (data) => {
+      console.log(data)
+        this.person.avatar = data
     })
   },
   methods: {
     validate () {
       let valid = this.$refs.form.validate()
-      if (valid){
-        if (this.buttonLabel === 'UPDATE') {
-          this.updatePerson()
-        }else{
-          this.addPerson()
-        }
-      }
+      if (valid) this.addPerson()
     },
     addPerson () {
       this.isLoading = true;
-      axios.post('person', this.newPerson)
+      if (this.leader) Object.assign(this.person, {leader : this.person.id})
+
+      var form = new FormData();
+
+      for (let key in this.person) {
+        form.append(`${key}`, this.person[key]);
+      }
+
+      axios.post('/person', form)
       .then(response => {
-        let submitted = Object.assign({}, this.newPerson);
-        this.$root.$emit('personAdded', submitted)
+        let data = {
+          type: "success",
+          message: "Add record successful"
+        }
+        this.$root.$emit('alert', data)
         this.isLoading = false
-        this.$root.$emit('alert', 'Add successfull')
         this.reset()
       })
       .catch(error => {
         this.isLoading = false
       });
     },
-    updatePerson () {
-        this.isLoading = true;
-        axios.patch('person/'+this.newPerson.id, this.newPerson)
-        .then(response => {
-          let submitted = Object.assign({}, this.newPerson)
-          this.$root.$emit('personUpdated', submitted);
-          this.isLoading = false
-          this.alertMessage = "Update successfull"
-          this.$root.$emit('alert')
-        })
-        .catch(error => {
-          this.isLoading = false
-        });
-    },
     reset () {
       this.$refs.form.reset()
     },
     save (date) {
-      this.$refs.menu.save(date)
+      this.$refs.menu.save(this.person.date)
     },
     closeForm () {
-      this.$root.$emit('clickCancel')
-      this.isFormOpen = !this.isFormOpen
+      window.location = '/home'
     },
-    fetchPeople () {
-      axios.get('person')
-      .then(response => {
-        this.people = response.data
-      })
-      .catch(error => (console.log(error)));
-    }
+    changeAvatar (files) {
+      console.log(files);
+      
+        if (!files) return false
+
+        this.person.avatar = files
+
+        if (files.type !== "image/png" && files.type !== "image/jpeg") {
+          let data = {
+            type: "error",
+            message: "Only jpeg and png images are allowed"
+          }
+          this.$root.$emit("alert", data)
+          return false
+
+        } else if (files.size > 2000000) {
+          let data = {
+            type: "error",
+            message: "File size should be less than 2 MB!"
+          }
+          this.$root.$emit("alert", data)
+          return false
+
+        } 
+
+        this.url = URL.createObjectURL(files)
+      }
   }
 }
 </script>

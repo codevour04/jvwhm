@@ -3,5 +3,7 @@
 @section('title', 'Profile')
 
 @section('content')
- <wireframe></wireframe>
+ 	
+    <profile leader="{{ $person->fullname }}" people="{{ $people }}"></profile>
+  
 @endsection

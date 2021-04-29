@@ -1,8 +1,9 @@
 <template>
   <v-app-bar app light color="indigo darken-2">
-    <v-app-bar-nav-icon @click.stop="drawer"></v-app-bar-nav-icon>
+    <drawer-button></drawer-button>
     <v-spacer></v-spacer>
-    <v-col cols="6">
+    <v-col cols="6" 
+    v-if="isThisHomePage">
     <!-- <v-combobox v-if="isListOpen" v-model="person" :items="people" item-text="fullname" :disabled="isSearching" @keyup.enter="searchPerson"
     @keyup="displaySuggestions"
     dense
@@ -10,11 +11,15 @@
     hide-details
     prepend-inner-icon="mdi-magnify" xs="2" id="combo-input">
     </v-combobox> -->
-    <v-text-field
-            filled
-            label="Prepend inner"
-            prepend-inner-icon="mdi-magnify"
-          ></v-text-field>
+    <v-text-field v-model="search" @keyup.enter="searchPerson" @keyup="checkInput"
+    :loading="isSearching"
+    :disabled="isSearching"
+    color="success"
+    dense
+    hide-details
+    solo
+    prepend-inner-icon="mdi-magnify"
+    ></v-text-field>
   </v-col>
     <v-spacer></v-spacer>
     <v-btn @click="showForm('Register')" v-if="isListOpen">
@@ -30,35 +35,36 @@
       person: '',
       isListOpen: true,
       isSearching: false,
-      search: ''
+      search: '',
+      people: [],
+      isThisHomePage: true
     }),
-    created () {
-      this.$root.$on('clickCancel', () => {
-        this.isListOpen = !this.isListOpen
-      })
-    },
     methods: {
       showForm (formTitle) {
-        this.isListOpen = !this.isListOpen
-        let data = {
-          button: 'ADD',
-          person: new Person()
-        }
-        this.$root.$emit('openForm', data)
+        location = 'person/create'
       },
       drawer () {
         this.$root.$emit('drawerNavIcon')
       },
       searchPerson () {
-        if (this.person.id) {
-          console.log(this.person.id)
+        let data = {
+          search: this.search
         }
-        
+        this.isSearching = true
+        axios.post('/people/search', data)
+        .then(response => {
+          this.isSearching = false
+          this.$root.$emit('search', response.data.data) 
+        })
+        .catch(error => {
+          console.log(error)
+          this.isSearching = false
+        });
       },
-      displaySuggestions () {
-        console.log($("#combo-input").text())
-
-        // axios.get('search', this.person)
+      checkInput () {
+        if (this.search.length === 0) {
+          this.searchPerson()
+        }
       }
     }
 

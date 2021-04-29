@@ -2,13 +2,13 @@
     <v-snackbar
       v-model="isAlertDisplay"
       :timeout="3000"
-      color="success"
+      :color="alertType"
       right
       absolute
       top
       transition="slide-x-reverse-transition"
     >
-      {{ message }}
+      {{ alertMessage }}
 
       <template v-slot:action="{ attrs }">
         <v-btn
@@ -29,10 +29,16 @@
     },
     data: () => ({
       text: '',
-      isAlertDisplay: false
+      isAlertDisplay: false,
+      alertType:"",
+      alertMessage: "" 
     }),
     created () {
-      this.$root.$on('alert', () => (this.isAlertDisplay = true))
+      this.$root.$on('alert', (data) => {
+        this.isAlertDisplay = true
+        this.alertType = data.type
+        this.alertMessage = data.message
+      })
     }
   }
 </script>

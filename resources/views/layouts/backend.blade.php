@@ -70,7 +70,9 @@
 
           <v-app>
             <left-sidebar></left-sidebar>
-            <header-bar-nav></header-bar-nav>
+            <header-bar-nav>
+              <snack-bar></snack-bar>
+            </header-bar-nav>
             
             @yield('content')
             

@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Person;
-use App\People;
 use App\Http\Requests\AddNewPersonRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Insertable;
+use Illuminate\Support\Facades\Storage;
 
 class PersonController extends Controller
 {
@@ -18,10 +18,7 @@ class PersonController extends Controller
      */
     public function index()
     {
-
-        $person = Person::find(2);
-        // dd($person->full_name);
-        return response()->json(Person::latest('created_at')->get());
+        return response()->json(Person::latest('created_at')->paginate(20));
     }
 
     /**
@@ -40,30 +37,32 @@ class PersonController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(AddNewPersonRequest $request)
+    public function store(Request $request)
     {
 
-        $person = new Person([
-            'firstname' => $request->input('firstname'),
-            'middlename' => $request->input('middlename'),
-            'lastname' => $request->input('lastname'),
-            'birthdate' => $request->input('birthdate'),
-            'address' => $request->input('address'),
-            'city' => $request->input('city'),
-            'contact_number' => $request->input('contact_number')
-        ]);
+        $filename = request('avatar') ? hash( 'sha256', false).request('avatar')->getClientOriginalName() : 'default.jpg';
 
-        $person->save();
-
-        if ($request->input('leader')) {
-
-            $leader = Person::find($request->input('leader'));
-
-            $leader->insertables()->create([
+        if (request('leader')) {
+            $leader = Person::find(request('leader'));
+            $leader->insertables()->sync([
                 'person_id' => $person->id
-
             ]);
         }
+
+        if ($filename !== "default.jpg") {
+            request('avatar')->storeAs('avatars', $hash.$filename, 'public_uploads');
+        }
+
+        $person = Person::create([   
+            'avatar' => $filename,
+            'firstname' => request('firstname'),
+            'middlename' => request('middlename'),
+            'lastname' => request('lastname'),
+            'birthdate' => request('birthdate'),
+            'address' => request('address'),
+            'city' => request('city'),
+            'contact_number' => request('contact_number')
+        ]);
 
 
         return response()->json($person);
@@ -75,10 +74,14 @@ class PersonController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Person $person)
     { 
 
-        return view('profile.index', ['person' => Person::find($id), 'person_id' => $id]);
+        $people = $person->insertables;
+        $peopleIds = $people->pluck('person_id');
+        $people = Person::whereIn('id', $peopleIds)->get();
+        $person = Person::find($person->id);
+        return view('profile.index', compact('person', 'people'));
     }
 
     /**
@@ -87,11 +90,10 @@ class PersonController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Person $person)
     {
-        return view('edit.index', [
-            'person' => Person::findOrFail($id)
-        ]);
+        $person = Person::find($person->id);
+        return view('edit.index', compact('person'));
     }
 
     /**
@@ -101,25 +103,45 @@ class PersonController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(AddNewPersonRequest $request, $id)
+    public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'firstname' => 'required',
+            'lastname' => 'required',
+        ]);
+
+        $filename = request('avatar');
+
+        if (request('avatar') != 'default.png') {
+            $filename = request('avatar') ? hash( 'sha256', false).request('avatar')->getClientOriginalName();
+        }
+        
+
+        if ($filename) {
+            request('avatar')->storeAs('avatars', $hash.$filename, 'public_uploads');
+        }
+
         $person = Person::find($id);
-        $person->firstname = $request['firstname'];
-        $person->lastname = $request['lastname'];
-        $person->middlename = $request['middlename'];
-        $person->birthdate = $request['birthdate'];
-        $person->address = $request['address'];
-        $person->city = $request['city'];
-        $person->contact_number = $request['contact_number'];
+
+        $person->avatar = $filename;
+        $person->firstname = request('firstname');
+        $person->middlename = request('middlename');
+        $person->lastname = request('lastname');
+        $person->birthdate = request('birthdate');
+        $person->address = request('address');
+        $person->city = request('city');
+        $person->contact_number = request('contact_number');
         $person->save();
 
-         if ($request['leader']) {
-
-            $person->leader()->create([
-                'person_id' => $request->input('leader')
-
+        if (request('leader')) {
+            $leader = Person::find(request('leader'));
+            $leader->insertables()->sync([
+                'person_id' => $person->id
             ]);
         }
+
+
+        return response()->json($person);
     }
 
     /**
@@ -148,6 +170,7 @@ class PersonController extends Controller
 
     public function search(Request $request) 
     {
-
+        return response()->json(Person::latest('created_at')->where("firstname", "LIKE", "%{$request['search']}%" )->paginate(20));
     }
+
 }

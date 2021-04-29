@@ -26,20 +26,9 @@
     </head>
     <body>
         <div id="app">
-            {{-- <login></login> --}}
+            <login></login>
         </div>
     </body>
-
-    <script>
-        for (let i = 1; i < 101; i++) {
-            let result = (i % 10);
-            if (result === 0) {
-                console.log("horray!");
-            } else {
-                console.log(i);
-            }
-        }
-    </script>
 
     <script  src="{{ mix('js/app.js') }}"></script>
 </html>

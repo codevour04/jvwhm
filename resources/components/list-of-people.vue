@@ -1,6 +1,5 @@
  <template>
-    <v-main v-if="isListOpen">
-      <snack-bar v-bind:message="alertMessage"></snack-bar>
+    <v-main v-if="isListOpen" class="overflow-y-auto">
       <v-container fluid>
         <v-row>
           <v-col v-for="(person, index) in people" :key="index" :xs="12" :sm="4"
@@ -12,18 +11,30 @@
             <v-hover>
               <template v-slot:default="{ hover }">
                 <v-card>
-                  <v-img aspect-ratio
-                     :src="'../../images/people/default/default-image.jpg'"
+                  <v-img height="150"
+                    :src="'/uploads/avatars/'+person.avatar"
                     class="white--text align-end"
                     gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
                   >
                     <v-card-text class="text--primary">
-                      <div class="person-name-card">{{ person.firstname }} {{ person.lastname }}</div>
+                      <div class="person-name-card" v-text="person.fullname"></div>
                     </v-card-text>
+                    <template v-slot:placeholder>
+                      <v-row
+                        class="fill-height ma-0"
+                        align="center"
+                        justify="center"
+                      >
+                        <v-progress-circular
+                          indeterminate
+                          color="grey lighten-5"
+                        ></v-progress-circular>
+                      </v-row>
+                    </template>
                   </v-img>
                   <v-card-text class="text--primary grey--text">
                     <span class="v-card-text-span-label">Leader:</span>
-                    <span v-text='person.leader'></span>
+                    <span v-text="person.leadername"></span>
                   </br>
                     <span class="v-card-text-span-label">Status:</span>
                     <span>Regular</span>
@@ -46,31 +57,44 @@
                 </v-card>
               </template>
             </v-hover>
-            <v-dialog v-model="isDialogOpen" persistent width="unset">
-              <v-card>
-                <v-card-title>Are you sure you want to remove this user?</v-card-title>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn
-                    color="green darken-1"
-                    text
-                    @click="isDialogOpen = false"
-                  >
-                    No
-                  </v-btn>
-                  <v-btn
-                    color="green darken-1"
-                    text
-                    @click="deactivate()"
-                  >
-                    Yes
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
           </v-col>
         </v-row>
+        <v-row v-intersect="infiniteScrolling">      
+        </v-row>
     </v-container>
+    <v-dialog
+      v-model="isDialogOpen"
+      width="400"
+      persistent
+    >
+      <v-card>
+        <v-card-title class="error">
+          Warning!
+        </v-card-title>
+        <v-card-text class="text--primary pt-5 px-8">
+          <div>Are you sure you want to deactivate this user?</div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            :disabled="isLoading"
+            color="primary"
+            text
+            @click="isDialogOpen = false"
+          >
+            No
+          </v-btn>
+          <v-btn
+            :loading="isLoading"
+            :disabled="isLoading"
+            color="error"
+            text
+            @click="deactivate"
+          >
+            Yes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-main>
 </template>
 
@@ -92,21 +116,24 @@
       isDialogOpen: false,
       peopleToDelete: [],
       isListOpen: true,
-      alertMessage: 'Delete successful'
+      alertMessage: 'Delete successful',
+      page: 1,
+      last_page: 0
     }),
+    computed: {
+      url () {
+        return "person?page="+this.page
+      }
+    },
     watch: {
     menu (val) {
         val && setTimeout(() => (this.$refs.picker.activePicker = 'YEAR'))
       }
     },
     created () {
-      this.fetchPeople();
       this.$root.$on('openForm', () => (this.isListOpen = !this.isListOpen))
       this.$root.$on('clickCancel', () => {
         this.isListOpen = !this.isListOpen
-      })
-      this.$root.$on('personAdded', (person) => {
-        this.people.unshift(person)
       })
       this.$root.$on('personUpdated', (person) => {
         this.people.filter((item, index) => {
@@ -115,46 +142,50 @@
             } 
           })
       })
+      this.$root.$on('search', (people) => {
+        this.people = []
+        this.people = people
+      })
     },
     methods: {
-      fetchPeople () {
-        axios.get('person')
-        .then(response => {
-          this.people = response.data
-          this.$root.$emit('loadPeople', this.people)
-        })
-        .catch(error => (console.log(error)));
-      },
       edit (id) {
-        this.people.filter((item) => {
-          if(item.id == id) this.person = item
-        })
-        let data = {
-          button: 'UPDATE',
-          person: this.person
-        }
-        this.$nextTick(() => {
-          this.$root.$emit('openForm', data);
-        })
-        
+        window.location = `person/${id}/edit`
       },
       dialogDelete (id) {
         this.peopleToDelete.push(id)
         this.isDialogOpen = true
       },
       deactivate () {
+        this.isLoading = true
         axios.delete('person/'+this.peopleToDelete)
-        .then(response => {  
-          this.people.filter((item, index) => {
+        .catch(error => (console.log(error)));
+        this.isDialogOpen = false
+        this.$root.$emit('alert')
+        this.isLoading = false
+        this.people.filter((item, index) => {
             this.peopleToDelete.filter((id) => {
               if(item.id === id){
-                this.people.splice(index, 1)
-                this.isDialogOpen = false            
+                this.people.splice(index, 1)            
               } 
             })
           })
-          this.$root.$emit('alert')
-        });
+      },
+      showInformation (id) {
+        window.location = `/person/${id}`;
+      },
+      infiniteScrolling(entries, observer, isIntersecting) { 
+          axios.get(this.url)
+            .then(response => {
+                this.current_page = response.data.current_page
+                this.last_page = response.data.last_page
+
+                response.data.data.forEach(item => this.people.push(item));
+                this.$root.$emit('loadPeople', this.people)
+                this.page++
+            })
+            .catch(err => {
+              console.log(err);
+            });
       }
     }
   }
