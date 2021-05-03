@@ -12,6 +12,7 @@
     "devDependencies": {
         "axios": "^0.19",
         "bootstrap": "^4.0.0",
+        "case-sensitive-paths-webpack-plugin": "^2.4.0",
         "cross-env": "^7.0",
         "jquery": "^3.2",
         "laravel-mix": "^5.0.1",
@@ -26,7 +27,9 @@
     "dependencies": {
         "moment": "^2.29.1",
         "phil-reg-prov-mun-brgy": "^1.1.0",
+        "vee-validate": "^4.3.4",
         "vue-router": "^3.5.1",
-        "vuetify": "^2.4.9"
+        "vuetify": "^2.4.11",
+        "vuetify-loader": "^1.4.3"
     }
 }

@@ -14,19 +14,25 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('login.index');
+    return view('auth.login');
 });
+
 
 Route::get('/login', function () {
-    return view('login.index');
+    return view('auth.login');
+})->name('login');
+
+Route::middleware('auth')->group(function () {
+	Route::get('/people', function () {
+		return view('people.index');
+	});
+	Route::get('/dashboard', function () {
+		return view('dashboard.index');
+	});
+	Route::post('/people/search', 'PersonController@search');
+	Route::resource('person', 'PersonController');
 });
 
-Route::get('/home', function () {
-	return view('home.index');
-});
+Auth::routes();
 
-Route::post('/people/search', 'PersonController@search');
-
-Route::resource('person', 'PersonController');
-
-
+Route::get('/home', 'HomeController@index')->name('home');

@@ -1,9 +1,9 @@
-@extends('layouts.backend')
+@extends('layouts.create')
 
 @section('title', 'Profile')
 
 @section('content')
  	
-    <profile leader="{{ $person->fullname }}" people="{{ $people }}"></profile>
+    <profile user="{{ $person }}" people="{{ $people }}"></profile>
   
 @endsection

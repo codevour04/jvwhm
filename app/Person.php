@@ -35,4 +35,7 @@ class Person extends Model
 
         return $person[0]->fullname;
     }
+
+
+
 }

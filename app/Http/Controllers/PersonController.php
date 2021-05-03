@@ -37,20 +37,14 @@ class PersonController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(AddNewPersonRequest $request)
     {
 
         $filename = request('avatar') ? hash( 'sha256', false).request('avatar')->getClientOriginalName() : 'default.jpg';
 
-        if (request('leader')) {
-            $leader = Person::find(request('leader'));
-            $leader->insertables()->sync([
-                'person_id' => $person->id
-            ]);
-        }
 
         if ($filename !== "default.jpg") {
-            request('avatar')->storeAs('avatars', $hash.$filename, 'public_uploads');
+            request('avatar')->storeAs('avatars', $filename, 'public_uploads');
         }
 
         $person = Person::create([   
@@ -64,6 +58,12 @@ class PersonController extends Controller
             'contact_number' => request('contact_number')
         ]);
 
+        if (request('leader')) {
+            $leader = Person::find(request('leader'));
+            $leader->insertables()->create([
+                'person_id' => $person->id
+            ]);
+        }
 
         return response()->json($person);
     }
@@ -76,10 +76,12 @@ class PersonController extends Controller
      */
     public function show(Person $person)
     { 
-
         $people = $person->insertables;
-        $peopleIds = $people->pluck('person_id');
-        $people = Person::whereIn('id', $peopleIds)->get();
+        if ($people) {
+            $peopleIds = $people->pluck('person_id');
+            $people = Person::whereIn('id', $peopleIds)->get();
+        }
+
         $person = Person::find($person->id);
         return view('profile.index', compact('person', 'people'));
     }
@@ -105,25 +107,15 @@ class PersonController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'firstname' => 'required',
-            'lastname' => 'required',
-        ]);
-
-        $filename = request('avatar');
-
-        if (request('avatar') != 'default.png') {
-            $filename = request('avatar') ? hash( 'sha256', false).request('avatar')->getClientOriginalName();
-        }
-        
-
-        if ($filename) {
-            request('avatar')->storeAs('avatars', $hash.$filename, 'public_uploads');
-        }
 
         $person = Person::find($id);
 
-        $person->avatar = $filename;
+        if ($person->avatar !== request('avatar')) {
+            $filename = hash( 'sha256', false).request('avatar')->getClientOriginalName();
+            request('avatar')->storeAs('avatars', $filename, 'public_uploads');
+            $person->avatar = $filename;
+        }
+        
         $person->firstname = request('firstname');
         $person->middlename = request('middlename');
         $person->lastname = request('lastname');
@@ -133,15 +125,55 @@ class PersonController extends Controller
         $person->contact_number = request('contact_number');
         $person->save();
 
-        if (request('leader')) {
-            $leader = Person::find(request('leader'));
-            $leader->insertables()->sync([
-                'person_id' => $person->id
-            ]);
-        }
+        $id = $person->id;
+
+        
+
+if (request('leader')) {
+
+    $comments = Insertable::whereHasMorph(
+    'insertable',
+    ['App\Person'],
+    function (Builder $query) use ($id) {
+        $query->where('person_id', $id);
+    }
+)->get();
+    
+    if ($comments->isNotEmpty()) {
+        $comments[0]->insertable_id = request('leader');
+        $comments[0]->save();
+    }else{
+        $leader = Person::find(request('leader'));
+        $leader->insertables()->create([
+            'person_id' => $person->id
+        ]);
+    }
+        
+}
 
 
-        return response()->json($person);
+        // if ($leader->insertables) {
+        //     dd("!!!");
+        // }else{
+        //     dd("?/");
+        // }
+
+
+        // $Insertable->insertables()->save(request('leader'));
+        // dd($person->insertables);
+
+        // if ($person->insertables) {
+        //     if (request('leader') !== $person->leader) {
+        //         $leader = Person::find(request('leader'));
+        //         $leader->insertables()->updateOrCreate([
+        //             'person_id' => $person->id
+        //         ]);
+        //     }
+        // }
+
+        
+
+        // return response()->json($person);
     }
 
     /**

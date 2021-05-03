@@ -1,5 +1,3 @@
-@extends('layouts.profile')
+@extends('layouts.update')
 
-@section('content')
-  <update-form person="{{ $person }}"></update-form>
-@endsection
+@section('title', 'Update')

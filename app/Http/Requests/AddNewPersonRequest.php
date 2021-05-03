@@ -24,7 +24,6 @@ class AddNewPersonRequest extends FormRequest
     public function rules()
     {
         return [
-            'avatar'    => 'mimes:jpg,bmp,png|file|max:2000000',
             'firstname' => 'required',
             'lastname'  => 'required'
         ];
@@ -33,8 +32,6 @@ class AddNewPersonRequest extends FormRequest
     public function messages()
     {
         return [
-            'avatar.max'         => 'Should upload file size less than 2 MB!',
-            'avatar.mimes'       => 'Only file type images are allowed',
             'firstname.required' => 'First name is required',
             'lastname.required'  => 'Last name is required' 
         ];

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
+      <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -67,18 +68,13 @@
     </head>
     <body>
         <div id="app">
-
-          <v-app>
-            <left-sidebar></left-sidebar>
             <header-bar-nav>
               <snack-bar></snack-bar>
+              <list-of-people></list-of-people>
             </header-bar-nav>
-            
-            @yield('content')
-            
-          </v-app>
         </div>
-    </body>
+
     <script  src="{{ mix('js/app.js') }}"></script>
+    </body>
     
 </html>
