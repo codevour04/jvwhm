@@ -22,7 +22,7 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 
-Route::middleware('auth')->group(function () {
+// Route::middleware('auth')->group(function () {
 	Route::get('/people', function () {
 		return view('people.index');
 	});
@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
 	});
 	Route::post('/people/search', 'PersonController@search');
 	Route::resource('person', 'PersonController');
-});
+// });
 
 Auth::routes();
 
